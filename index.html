@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Train Scheduler</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <!--
+    <link rel="stylesheet" type="text/css" href="assets/css/style.css">
+    -->
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.19.2/moment.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <style>
+        .btn,
+        .jumbotron,
+        .panel>.panel-heading {
+            background-image: none;
+            background-color: maroon;
+            color: white;
+
+        }
+
+        h3: {
+            text-align: center
+        }
+    </style>
+</head>
+
+<body>
+    <br>
+    <div class="container">
+        <div class="row">
+            <div class="col-md-offset-1 col-md-10">
+                <div class="jumbotron">
+                    <!--
+                    <button class="btn btn-warning btn-xs theme-button"><span class="glyphicon glyphicon-music"></span> Play Theme!</button>
+                    <button class="btn btn-default btn-xs pause-button"><span class="glyphicon glyphicon-pause"></span> Pause Song</button>
+                    -->
+                    <h2>Theoretical Trains Run On Time</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="row">
+            <div class="col-md-offset-1 col-md-10">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h3 class="panel-title">Train Schedule</h3>
+                    </div>
+                    <div class="panel-body">
+                        <table class="table">
+                            <tr>
+                                <th>Train Name</th>
+                                <th>Destination</th>
+                                <th>Frequency (min)</th>
+                                <th>Next Arrival</th>
+                                <th>Minutes Away</th>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="row">
+            <div class="col-md-offset-1 col-md-10">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h3 class="panel-title">Add A Train</h3>
+                    </div>
+                    <div class="panel-body">
+                        <div class="form-group">
+                            <label for="usr">Train Name:</label>
+                            <input type="text" class="form-control" id="train-name">
+                        </div>
+                        <div class="form-group">
+                            <label for="usr">Destination:</label>
+                            <input type="text" class="form-control" id="train-destination">
+                        </div>
+                        <div class="form-group">
+                            <label for="usr">First Train Time (HH:mm - military time):</label>
+                            <input type="text" class="form-control" id="train-time">
+                        </div>
+                        <div class="form-group">
+                            <label for="usr">Frequency (min):</label>
+                            <input type="text" class="form-control" id="train-frequency">
+                        </div>
+                        <button type="submit" class="btn btn-default" id="submit-train">Submit</button>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/4.6.2/firebase.js"></script>
+    <script>
+        // Initialize Firebase
+        var config = {
+            apiKey: "AIzaSyDO9pFmvujjzEF2mtjz2WXnQKokPnBrBbI",
+            authDomain: "exercise-c1dc5.firebaseapp.com",
+            databaseURL: "https://exercise-c1dc5.firebaseio.com",
+            projectId: "exercise-c1dc5",
+            storageBucket: "exercise-c1dc5.appspot.com",
+            messagingSenderId: "842990990716"
+        };
+        firebase.initializeApp(config);
+        const db = firebase.database();
+
+        $("#submit-train").on("click", function(event) {
+            function train(name, destination, time, frequency) {
+                this.name = name;
+                this.destination = destination;
+                this.time = time;
+                this.frequency = frequency;
+            }
+            var pushMe = new train($("#train-name").val().trim(), $("#train-destination").val().trim(), $("#train-time").val().trim(), $("#train-frequency").val().trim());
+            db.ref('trains').push(pushMe);
+        });
+
+        //TODO finish this after JS.Moment
+        db.ref("trains").on("child_added", function(childSnapshot) {
+            var frequency = childSnapshot.val().frequency;
+            var startTime = childSnapshot.val().time;
+            var currentTime = moment();
+
+            //Push back a year
+            var startTimeConverted = moment(startTime, "hh:mm").subtract(1, "years");
+            var diffTime = moment().diff(moment(startTimeConverted), "minutes");
+            var tRemainder = diffTime % frequency;
+            var tMinutesTillTrain = frequency - tRemainder;
+            var nextTrain = moment().add(tMinutesTillTrain, "minutes");
+
+
+            console.log("starting time: " + startTime);
+            var newRow = $("<tr>");
+            newRow.append($("<td>").text(childSnapshot.val().name))
+                .append($("<td>").text(childSnapshot.val().destination))
+                .append($("<td>").text(frequency))
+                .append($("<td>").text(moment(nextTrain).format("h:mm a")))
+                .append($("<td>").text(tMinutesTillTrain));
+            //.append($("<td>").text())
+            $(".table").append(newRow);
+        });
+    </script>
+    <!--
+    <script type="text/javascript" src="assets/javascript/app.js"></script>
+    -->
+</body>
+
+
+</html>
